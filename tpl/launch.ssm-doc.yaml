@@ -1,0 +1,36 @@
+---
+schemaVersion: '2.2'
+description: Test ASG launch
+parameters:
+  AutoScalingGroupName:
+    type: String
+  InstanceId:
+    type: String
+  LifecycleActionToken:
+    type: String
+  LifecycleHookName:
+    type: String
+mainSteps:
+  - name: TestLaunch
+    action: aws:runDocument
+    precondition:
+      StringEquals:
+        - platformType
+        - Windows
+    inputs:
+      documentType: SSMDocument
+      documentPath: AWS-RunPowerShellScript
+      documentParameters: |
+        {
+          "commands": [
+            "$ErrorActionPreference = 'Stop'",
+            "try {",
+            "    Write-Host 'Launch: OK'",
+            "    Complete-ASLifecycleAction -AutoScalingGroupName '{{ AutoScalingGroupName }}' -InstanceId '{{ InstanceId }}' -LifecycleActionToken '{{ LifecycleActionToken }}' -LifecycleHookName '{{ LifecycleHookName }}' -LifecycleActionResult 'CONTINUE' -Force",
+            "} catch {",
+            "    Write-Error -ErrorRecord $_",
+            "    exit 1",
+            "}",
+            "exit $LastExitCode"
+          ]
+        }
