@@ -26,3 +26,5 @@ config.yaml
 .envrc
 
 *.pem
+
+.DS_Store
