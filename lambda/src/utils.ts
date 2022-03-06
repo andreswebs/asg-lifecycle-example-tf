@@ -12,18 +12,37 @@ import {
   DescribeInstanceStatusCommandOutput,
 } from '@aws-sdk/client-ec2';
 
-import { region, docMap } from './constants';
+import {
+  DynamoDBClient,
+  ResourceNotFoundException,
+} from '@aws-sdk/client-dynamodb';
 
-import { EC2LifecycleAction } from './types';
+import {
+  DynamoDBDocumentClient,
+  GetCommand,
+  GetCommandInput,
+} from '@aws-sdk/lib-dynamodb';
+
+import { region, dbTableName } from './constants';
+
+import { EC2LifecycleAction, ASGConfig } from './types';
 
 const ssm = new SSMClient({ region });
 const ec2 = new EC2Client({ region });
+const ddb = new DynamoDBClient({ region });
+
+const ddbDoc = DynamoDBDocumentClient.from(ddb);
+
+async function sleep(waitTimeInMs: number) {
+  return new Promise((resolve) => setTimeout(resolve, waitTimeInMs));
+}
 
 async function runCommand(
+  docName: string,
   detail: EC2LifecycleAction
 ): Promise<SendCommandCommandOutput> {
   const input: SendCommandCommandInput = {
-    DocumentName: docMap.get(detail.LifecycleTransition),
+    DocumentName: docName,
     InstanceIds: [detail.EC2InstanceId],
     Parameters: {
       AutoScalingGroupName: [detail.AutoScalingGroupName],
@@ -60,8 +79,29 @@ async function instanceIsReady(instanceId: string): Promise<boolean> {
   return instanceStatus === 'ok' && systemStatus === 'ok';
 }
 
-async function sleep(waitTimeInMs: number) {
-  return new Promise((resolve) => setTimeout(resolve, waitTimeInMs));
+async function getASGConfig(asgName: string): Promise<ASGConfig> {
+  const input: GetCommandInput = {
+    TableName: dbTableName,
+    Key: {
+      AutoscalingGroupName: asgName,
+    },
+  };
+
+  const cmd: GetCommand = new GetCommand(input);
+
+  const res = await ddbDoc
+    .send(cmd)
+    .then((res) => res.Item as ASGConfig)
+    .catch((err) => {
+      if (err instanceof ResourceNotFoundException) {
+        throw new Error(
+          `autoscaling group name <${asgName}> not found in DynamoDB table <${dbTableName}>`
+        );
+      }
+      throw err;
+    });
+
+  return res;
 }
 
-export { runCommand, instanceIsReady, sleep };
+export { sleep, runCommand, instanceIsReady, getASGConfig };

@@ -18,4 +18,10 @@ type Event =
   | EventBridgeEvent<LaunchDetailType, EC2LifecycleAction>
   | EventBridgeEvent<TerminateDetailType, EC2LifecycleAction>;
 
-export type { Event, EC2LifecycleAction };
+interface ASGConfig {
+  AutoscalingGroupName: string;
+  Launch: string;
+  Terminate: string;
+}
+
+export type { Event, EC2LifecycleAction, ASGConfig };

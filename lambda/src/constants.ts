@@ -4,18 +4,14 @@ const region =
 const transitionLaunch = 'autoscaling:EC2_INSTANCE_LAUNCHING' as const;
 const transitionTerminate = 'autoscaling:EC2_INSTANCE_TERMINATING' as const;
 
-const docLaunch = process.env.SSM_DOC_LAUNCH;
-const docTerminate = process.env.SSM_DOC_TERMINATE;
+const transitionMap = new Map<string, string>();
+transitionMap.set(transitionLaunch, 'Launch');
+transitionMap.set(transitionTerminate, 'Terminate');
 
-if (!docLaunch) {
-  throw new Error('missing env var: SSM_DOC_LAUNCH');
+const dbTableName = process.env.DB_TABLE_NAME;
+
+if (!dbTableName) {
+  throw new Error('missing env var: DB_TABLE_NAME');
 }
-if (!docTerminate) {
-  throw new Error('missing env var: SSM_DOC_TERMINATE');
-}
 
-const docMap = new Map<string, string>();
-docMap.set(transitionLaunch, docLaunch);
-docMap.set(transitionTerminate, docTerminate);
-
-export { region, docMap };
+export { region, dbTableName, transitionMap };

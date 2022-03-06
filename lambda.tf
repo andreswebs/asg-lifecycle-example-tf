@@ -66,10 +66,25 @@ data "aws_iam_policy_document" "lambda_send_command" {
 
 }
 
+data "aws_iam_policy_document" "lambda_read_config" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:BatchGetItem",
+      "dynamodb:Scan",
+      "dynamodb:Query",
+      "dynamodb:ConditionCheckItem"      
+    ]
+    resources = [aws_dynamodb_table.asg_handler_config.arn]
+  }
+}
+
 data "aws_iam_policy_document" "lambda_permissions" {
   source_policy_documents = [
     data.aws_iam_policy_document.lambda_logs.json,
     data.aws_iam_policy_document.lambda_send_command.json,
+    data.aws_iam_policy_document.lambda_read_config.json,
   ]
 }
 
@@ -92,8 +107,7 @@ resource "aws_iam_role_policy_attachment" "xray_permissions" {
 
 locals {
   lambda_env = {
-    SSM_DOC_LAUNCH    = aws_ssm_document.launch.name
-    SSM_DOC_TERMINATE = aws_ssm_document.terminate.name
+    DB_TABLE_NAME = aws_dynamodb_table.asg_handler_config.name
   }
 }
 
