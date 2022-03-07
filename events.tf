@@ -7,7 +7,7 @@ resource "aws_cloudwatch_event_rule" "lifecycle" {
 }
 
 resource "aws_cloudwatch_event_target" "lambda" {
-  target_id = "${var.name}-autoscaling-lifecycle-launch"
+  target_id = "${var.name}-autoscaling-lifecycle"
   rule      = aws_cloudwatch_event_rule.lifecycle.name
   arn       = aws_lambda_function.this.arn
 }
