@@ -8,10 +8,11 @@ const transitionMap = new Map<string, string>();
 transitionMap.set(transitionLaunch, 'Launch');
 transitionMap.set(transitionTerminate, 'Terminate');
 
+const dbHashKey = process.env.DB_HASH_KEY || 'AutoscalingGroupName';
 const dbTableName = process.env.DB_TABLE_NAME;
 
 if (!dbTableName) {
   throw new Error('missing env var: DB_TABLE_NAME');
 }
 
-export { region, dbTableName, transitionMap };
+export { region, dbTableName, dbHashKey, transitionMap };

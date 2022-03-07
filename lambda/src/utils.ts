@@ -23,7 +23,7 @@ import {
   GetCommandInput,
 } from '@aws-sdk/lib-dynamodb';
 
-import { region, dbTableName } from './constants';
+import { region, dbTableName, dbHashKey } from './constants';
 
 import { EC2LifecycleAction, ASGConfig } from './types';
 
@@ -83,7 +83,7 @@ async function getASGConfig(asgName: string): Promise<ASGConfig> {
   const input: GetCommandInput = {
     TableName: dbTableName,
     Key: {
-      AutoscalingGroupName: asgName,
+      [dbHashKey]: asgName,
     },
   };
 
