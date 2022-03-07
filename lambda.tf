@@ -108,7 +108,7 @@ resource "aws_iam_role_policy_attachment" "xray_permissions" {
 locals {
   lambda_env = {
     DB_TABLE_NAME = aws_dynamodb_table.asg_handler_config.name
-    DB_HASH_KEY = local.asg_handler_hash_key
+    DB_HASH_KEY = aws_dynamodb_table.asg_handler_config.hash_key
   }
 }
 
