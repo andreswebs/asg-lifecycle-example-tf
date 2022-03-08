@@ -12,52 +12,36 @@ resource "random_uuid" "lambda_src_hash" {
   keepers = merge(local.keeper_config, local.keeper_src)
 }
 
-resource "null_resource" "lambda_dependencies" {
-  provisioner "local-exec" {
-    working_dir = local.lambda_dir
-    interpreter = [
-      "sh", "-c"
-    ]
-    command = "npm install"
-  }
-
-  triggers = {
-    uuid = random_uuid.lambda_src_hash.result
-  }
+data "external" "lambda_dependencies" {
+  program = [
+    abspath("${path.module}/scripts/install.sh"),
+    local.lambda_dir,
+    random_uuid.lambda_src_hash.result
+  ]
 }
 
-resource "null_resource" "lambda_dist" {
-  depends_on = [null_resource.lambda_dependencies]
-  provisioner "local-exec" {
-    working_dir = local.lambda_dir
-    interpreter = [
-      "sh", "-c"
-    ]
-    command = "npm run build"
-  }
 
-  triggers = {
-    uuid = random_uuid.lambda_src_hash.result
-  }
+data "external" "lambda_dist" {
+  depends_on = [data.external.lambda_dependencies]
+  program    = [
+    abspath("${path.module}/scripts/build.sh"),
+    local.lambda_dir,
+    random_uuid.lambda_src_hash.result
+  ]
 }
 
-resource "null_resource" "lambda_all" {
-  depends_on = [null_resource.lambda_dist]
-  provisioner "local-exec" {
-    working_dir = local.lambda_dir
-    interpreter = [
-      "sh", "-c"
-    ]
-    command = "cp -r ${local.lambda_dir}/node_modules ${local.lambda_dist_dir}"
-  }
-
-  triggers = {
-    uuid = random_uuid.lambda_src_hash.result
-  }
+data "external" "lambda_bundle" {
+  depends_on = [data.external.lambda_dist]
+  program    = [
+    abspath("${path.module}/scripts/bundle.sh"),
+    "${local.lambda_dir}/node_modules",
+    local.lambda_dist_dir,
+    random_uuid.lambda_src_hash.result
+  ]
 }
 
 data "archive_file" "lambda_package" {
-  depends_on       = [null_resource.lambda_all]
+  depends_on       = [data.external.lambda_bundle]
   type             = "zip"
   source_dir       = local.lambda_dist_dir
   output_path      = local.lambda_archive

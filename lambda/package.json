@@ -8,7 +8,7 @@
   },
   "scripts": {
     "local:ts": "npx ts-node src/app.ts",
-    "build": "npx rimraf ./dist && tsc",
+    "build": "npx rimraf ./dist/* && touch ./dist/.gitkeep && tsc",
     "watch": "tsc -w",
     "lint": "eslint . --ext .js,.ts",
     "lint:fix": "eslint . --ext .js,.ts --fix"

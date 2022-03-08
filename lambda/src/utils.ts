@@ -3,6 +3,9 @@ import {
   SendCommandCommandInput,
   SendCommandCommandOutput,
   SendCommandCommand,
+  DescribeInstanceInformationCommand,
+  DescribeInstanceInformationCommandInput,
+  DescribeInstanceInformationCommandOutput,
 } from '@aws-sdk/client-ssm';
 
 import {
@@ -79,6 +82,30 @@ async function instanceIsReady(instanceId: string): Promise<boolean> {
   return instanceStatus === 'ok' && systemStatus === 'ok';
 }
 
+async function ssmIsReady(instanceId: string): Promise<boolean> {
+  const input: DescribeInstanceInformationCommandInput = {
+    Filters: [
+      {
+        Key: 'InstanceIds',
+        Values: [instanceId],
+      },
+    ],
+  };
+
+  const cmd: DescribeInstanceInformationCommand =
+    new DescribeInstanceInformationCommand(input);
+
+  const res: DescribeInstanceInformationCommandOutput = await ssm.send(cmd);
+
+  if (!res.InstanceInformationList || !res.InstanceInformationList.length) {
+    return false;
+  }
+
+  const pingStatus = res.InstanceInformationList[0].PingStatus;
+
+  return pingStatus === 'Online';
+}
+
 async function getASGConfig(asgName: string): Promise<ASGConfig> {
   const input: GetCommandInput = {
     TableName: dbTableName,
@@ -104,4 +131,16 @@ async function getASGConfig(asgName: string): Promise<ASGConfig> {
   return res;
 }
 
-export { sleep, runCommand, instanceIsReady, getASGConfig };
+function status(state: string, msg: string, time: number): string {
+  return JSON.stringify(
+    {
+      status: state,
+      msg,
+      time,
+    },
+    null,
+    2
+  );
+}
+
+export { sleep, runCommand, instanceIsReady, ssmIsReady, getASGConfig, status };

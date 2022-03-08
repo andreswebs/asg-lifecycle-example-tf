@@ -31,7 +31,7 @@ locals {
 }
 
 data "aws_iam_policy_document" "lambda_send_command" {
-  
+
   statement {
     effect    = "Allow"
     actions   = ["ssm:SendCommand"]
@@ -48,8 +48,11 @@ data "aws_iam_policy_document" "lambda_send_command" {
   }
 
   statement {
-    effect    = "Allow"
-    actions   = ["ec2:DescribeInstanceStatus"]
+    effect = "Allow"
+    actions = [
+      "ec2:DescribeInstanceStatus",
+      "ssm:DescribeInstanceInformation",
+    ]
     resources = ["*"]
   }
 
@@ -63,7 +66,7 @@ data "aws_iam_policy_document" "lambda_read_config" {
       "dynamodb:BatchGetItem",
       "dynamodb:Scan",
       "dynamodb:Query",
-      "dynamodb:ConditionCheckItem"      
+      "dynamodb:ConditionCheckItem"
     ]
     resources = [aws_dynamodb_table.asg_handler_config.arn]
   }
